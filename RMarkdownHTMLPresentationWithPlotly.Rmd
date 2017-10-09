@@ -1,0 +1,54 @@
+---
+title: "Week 3 - R Markdown Presentation & Plotly"
+author: "Aaron Trask"
+date: "October 8, 2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+
+## Slide with R Output
+
+```{r plotlyExample}
+library(plotly)
+library(quantmod)
+library(dplyr)
+
+# get the historical stock prices
+symbols <- getSymbols(c("AAPL","GOOG"),src='yahoo')
+
+# convert the prices into a data frame for the last 60 days
+dfAAPL <- data.frame(Date=index(AAPL),Ticker="AAPL",coredata(AAPL))
+dfAAPL <- tail(dfAAPL, 60)
+dfGOOG <- data.frame(Date=index(GOOG),Ticker="GOOG",coredata(GOOG))
+dfGOOG <- tail(dfGOOG, 60)
+df <- inner_join(dfAAPL, dfGOOG, by = c("Date" = "Date"))
+
+# generate the interactive plot
+p <- plot_ly(df, x = ~Date) %>%
+  add_lines(y = ~AAPL.Close, name = "AAPL") %>%
+  add_lines(y = ~GOOG.Close, name = "GOOG", visible = FALSE) %>%
+  layout(
+    title = "Closing Stock Price",
+    xaxis = list(domain = c(0.1, 1)),
+    yaxis = list(title = "Price ($)"),
+    updatemenus = list(
+      list(
+        y = 0.7,
+        buttons = list(
+          list(method = "restyle",
+               args = list("visible", list(TRUE, FALSE)),
+               label = "AAPL"),
+
+          list(method = "restyle",
+               args = list("visible", list(FALSE, TRUE)),
+               label = "GOOG")))
+    )
+  )
+
+p
+```
